@@ -328,18 +328,30 @@ class GitHub:
                              waitCreateTime=4):
         feedback.pushConsoleInfo("Please wait, creating repository and waiting some seconds to github update.")
         sleep(waitCreateTime)
-        import git
+        feedback.pushConsoleInfo("Initializing repository.")
+
         repo = GitHub.getRepository(outputDir, ghUser, ghRepository, ghPassword, feedback)
+        feedback.pushConsoleInfo("Actual branch: " + repo.active_branch.name)
         GitHub.configUser(repo, ghUser, ghRepository)
+
+        feedback.pushConsoleInfo("Creating README file.")
         readmeName = 'README.md'
         with open(os.path.join(outputDir, readmeName), 'w') as f:
             f.write("\n# {}\n\n Sharing my maps online.\n\n# Maps in this repository\n[List maps in repository]"
                     "(https://maps.csr.ufmg.br/calculator/?lang=eng&map=&queryid=152&listRepository=Repository"
                     "&storeurl=https://github.com/{}/{}/)".format(ghRepository, ghUser, ghRepository))
+
+        feedback.pushConsoleInfo("Commiting README file to repository.")
         repo.git.add(['README.md'])
         repo.git.commit(m='Mappia initializing master Head.')
+
+        feedback.pushConsoleInfo("Creating a new branch")
+        repo.git.branch("-M", "master")
+        
+        feedback.pushConsoleInfo("Pushing changes to remote repository.")
         GitHub.pushChanges(repo, ghUser, ghRepository, ghPassword, feedback)
         sleep(waitInitializeTime)
+        
         return True#GitHub.isRepositoryInitialized(ghUser, ghRepository)
 
     @staticmethod
