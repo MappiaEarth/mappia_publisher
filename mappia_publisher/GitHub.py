@@ -283,10 +283,10 @@ class GitHub:
             feedback.pushConsoleInfo("Git: Pulling remote repository current state.")
             # UTILS.runLongTask(repo.git.pull, feedback, 'Pease wait, pulling changes.', 30, " -s recursive -X ours " + GitHub.getGitUrl(user, repository) + "master")
             UTILS.runLongTask(repo.git.pull, feedback, 'Pease wait, pulling changes.', 30, "-s", "recursive", "-X",
-                              "ours", GitHub.getGitUrl(user, ghRepository), "master")
+                              "ours", GitHub.getGitUrl(user, ghRepository), "main")
             feedback.pushConsoleInfo("Before fetch changes.")
             UTILS.runLongTask(repo.git.fetch, feedback, 'Please wait, fetching changes.', 30,
-                              GitHub.getGitUrl(user, ghRepository), "master")
+                              GitHub.getGitUrl(user, ghRepository), "main")
             feedback.pushConsoleInfo("Git: Doing checkout.")
             UTILS.runLongTask(repo.git.checkout, feedback, 'Please wait, doing checkout', 30, "--ours")
         except:
@@ -309,7 +309,7 @@ class GitHub:
         payload = {
             'name': ghRepository,
             'description': 'Sharing my spatial data on an online platform.',
-            'branch': 'master',
+            'branch': 'main',
             'auto_init': 'false'
         }
         feedback.pushConsoleInfo("Creating a new repository: " + ghRepository)
@@ -343,10 +343,10 @@ class GitHub:
 
         feedback.pushConsoleInfo("Commiting README file to repository.")
         repo.git.add(['README.md'])
-        repo.git.commit(m='Mappia initializing master Head.')
+        repo.git.commit(m='Mappia initializing main branch.')
 
         feedback.pushConsoleInfo("Creating a new branch")
-        repo.git.branch("-M", "master")
+        repo.git.branch("-M", "main")
         
         feedback.pushConsoleInfo("Pushing changes to remote repository.")
         GitHub.pushChanges(repo, ghUser, ghRepository, ghPassword, feedback)
@@ -451,7 +451,7 @@ class GitHub:
         # repo.git.merge("-s recursive", "-X ours")
         # feedback.pushConsoleInfo("Git: Pushing changes.")
         try:
-            repo.git.push(GitHub.getGitUrl(ghUser, gitRepository), "master:refs/heads/master")
+            repo.git.push(GitHub.getGitUrl(ghUser, gitRepository), "main:refs/heads/main")
         except:
             pass
         if repo.index.diff(None) or repo.untracked_files:
@@ -773,7 +773,7 @@ class GitInteractive():
     @staticmethod
     def pushChanges(repo, user, repository, password, feedback):
         return UTILS.runLongTask(repo.git.push, feedback, 'Please wait, uploading changes.', 30,
-                                 GitHub.getGitPassUrl(user, repository, password), "master:refs/heads/master")
+                                 GitHub.getGitPassUrl(user, repository, password), "main:refs/heads/main")
 
     @staticmethod
     def gitCommit(repo, msg, feedback):
