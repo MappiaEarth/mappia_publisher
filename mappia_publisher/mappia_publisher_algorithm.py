@@ -375,7 +375,7 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
 
     OUTPUT_DIR_TMP = None
 
-    version = '2.9.12'
+    version = '2.10.0'
 
     last_update_date = None
 
