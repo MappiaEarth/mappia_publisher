@@ -792,7 +792,7 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
                 "Repository not found",
                 "The repository was not found, want to create a new repository?",
                 defaultButton=QMessageBox.Yes,
-                buttocsns=(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel))):
+                buttons=(QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel))):
             feedback.pushConsoleInfo("Error: A valid repository is needed please enter a valid repository name or create a new one.")
             return False
         elif ((not GitHub.existsRepository(ghUser, ghRepository, ghPassword) and not GitHub.createRepo(ghRepository, ghUser, ghPassword, self.OUTPUT_DIR_TMP, feedback))
