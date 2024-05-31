@@ -196,7 +196,7 @@ class WMSCapabilities:
             dlLink = dlLink[(dlLink.index(':') + 1):]
         elif '˸' in dlLink:
             dlLink = dlLink[(dlLink.index('˸') + 1):]
-        return "group˸" + ('shp' if isShapefile else 'tif') + "˸˸˸" + dlLink + "˸notListing˸˸maxZoom˸" + str(maxZoom)
+        return "group:" + ('shp' if isShapefile else 'tif') + ":::" + dlLink + ":notListing::maxZoom:" + str(maxZoom)
 
     @staticmethod
     def getMapDescription(layerNameID, layerAttr, latMinX, latMinY, latMaxX, latMaxY, projMinX, projMinY, projMaxX, projMaxY, maxZoom, isShapefile, dLink):
