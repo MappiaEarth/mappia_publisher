@@ -775,6 +775,15 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
         self.OUTPUT_DIR_TMP = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
         if len(self.OUTPUT_DIR_TMP) <= 0:
             self.OUTPUT_DIR_TMP = tempfile.mkdtemp()
+        if GitHub.isGitRepository(self.OUTPUT_DIR_TMP):
+            feedback.pushConsoleInfo("Automatic Step: Checking if the output directory has the right git repository.")
+            outputDirectoryRepositoryName = GitHub.getRepoName(self.OUTPUT_DIR_TMP)
+            if (outputDirectoryRepositoryName != ghRepository):
+                feedback.pushConsoleInfo("Error: The output directory has the repository: \"" 
+                                        + outputDirectoryRepositoryName + "\" and the specified repository is: \"" 
+                                        + ghRepository + "\".\nPlease, create a new output directory or change the repository name to match: \"" 
+                                        + outputDirectoryRepositoryName + "\".")
+                return False
         feedback.pushConsoleInfo("Automatic Step: Checking remote repository.")
         if not UTILS.isQgisSupported():
             feedback.pushConsoleInfo("Warning: This plugin was developped for QGIS 3.x+ please consider update.\n" + (("The identified QGIS Verison is " + UTILS.getQGISversion()) if UTILS.getQGISversion() is not None else "Version could not be idenfied."))
