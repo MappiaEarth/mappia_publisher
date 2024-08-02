@@ -745,38 +745,79 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
 
 
     def checkParameterValues(self, parameters, context):
+        def checkZoomLevels(self, parameters, context):
+            min_zoom = 0
+            max_zoom = self.parameterAsInt(parameters, self.ZOOM_MAX, context)
+
+            if max_zoom < min_zoom:
+                return self.tr("Invalid zoom levels range.")
+            else:
+                return ""
+
+        def checkLayerList(self, parameters, context):
+            if len(self.parameterAsLayerList(parameters, self.LAYERS, context)) <= 0:
+                return self.tr("Please select one map or more.")
+            else:
+                return ""
+            
+        def checkGitRepositoryName(self, parameters, context):
+            gitRepository = self.parameterAsString(parameters, self.GITHUB_REPOSITORY, context)
+            if ' ' in gitRepository:
+                return self.tr("Space is not allowed in Repository name (remote folder).")
+            else:
+                return ""
+        
+        def checkCredentials(self, parameters, context):
+            if GitHub.testLogin(self.parameterAsString(parameters, self.GITHUB_USER, context), self.ghPassword) == False:
+                return self.tr("Invalid user or password. Please visit the link https://github.com/login and check your password.")
+            else:
+                return ""
+        
+        def checkOutputDirectory(self, parameters, context):
+            try:
+                gitExe = GitHub.findGitExe(parameters[self.GIT_EXECUTABLE], self.found_git, None, False)
+
+                if gitExe:
+                    GitHub.prepareEnvironment(gitExe)
+                    return self.checkOutputDirectoryMatchRepository(parameters, context)
+            except Exception as e:
+                pass # If failed to find the git executable just ignore it.
+            
+            return ""
+
         print('checkParameterValues()')
-        min_zoom = 0
-        max_zoom = self.parameterAsInt(parameters, self.ZOOM_MAX, context)
-        if max_zoom < min_zoom:
-            return False, self.tr('Invalid zoom levels range.')
-        if len(self.parameterAsLayerList(parameters, self.LAYERS, context)) <= 0:
-            return False, self.tr("Please select one map or more.")
+
+        errors = []
+        
+        errors.append(checkZoomLevels(self, parameters, context))
+        errors.append(checkLayerList(self, parameters, context))
+        errors.append(checkGitRepositoryName(self, parameters, context))
+        errors.append(checkCredentials(self, parameters, context))
+        errors.append(checkOutputDirectory(self, parameters, context))
+
+        errors = list(filter(None, errors))
+        if len(errors) == 0:
+            return super().checkParameterValues(parameters, context)
+
+        errorMessage = "Erros:\n"
+        errorsCount = 1
+        for error in errors:
+            errorMessage += str(errorsCount) + ". " + error + "\n"
+            errorsCount += 1
+
+        return False, errorMessage
+    
+    def checkOutputDirectoryMatchRepository(self, parameters, context):
+        outputDirecotry = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
         gitRepository = self.parameterAsString(parameters, self.GITHUB_REPOSITORY, context)
-        if ' ' in gitRepository:
-            return False, self.tr("Error: Space is not allowed in Repository name (remote folder).")
 
-        if GitHub.testLogin(self.parameterAsString(parameters, self.GITHUB_USER, context), self.ghPassword) == False:
-            return False, self.tr('Error: Invalid user or password. Please visit the link https://github.com/login and check your password.')
+        if GitHub.isGitRepository(outputDirecotry):
+            outputDirectoryRepositoryName = GitHub.getRepoName(outputDirecotry)
 
-        try:
-            gitExe = GitHub.findGitExe(parameters[self.GIT_EXECUTABLE], self.found_git, None, False)
-
-            if gitExe:
-                GitHub.prepareEnvironment(gitExe)
-                outputDirecotry = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
-
-                if GitHub.isGitRepository(outputDirecotry):
-                    outputDirectoryRepositoryName = GitHub.getRepoName(outputDirecotry)
-
-                    if outputDirectoryRepositoryName != gitRepository:
-                        return False, self.tr('The output directory has the repository: "' + outputDirectoryRepositoryName + '" and the specified repository is: "' + gitRepository + '".\nPlease, create a new output directory or change the repository name to match: "' + outputDirectoryRepositoryName + '".')
-        except Exception as e:
-            # If failed to find the git executable just ignore it.
-            pass
-                
-        return super().checkParameterValues(parameters, context)
-
+            if outputDirectoryRepositoryName != gitRepository:
+                return self.tr('The output directory has the repository: "' + outputDirectoryRepositoryName + '" and the specified Repository name is: "' + gitRepository + '".\nPlease, create a new output directory or change the repository name to match: "' + outputDirectoryRepositoryName + '".')
+        
+        return ""
 
     def prepareAlgorithm(self, parameters, context, feedback):
         print("prepareAlgorithm() Started: Verify the input options.")
@@ -802,15 +843,13 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
         self.OUTPUT_DIR_TMP = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
         if len(self.OUTPUT_DIR_TMP) <= 0:
             self.OUTPUT_DIR_TMP = tempfile.mkdtemp()
-        if GitHub.isGitRepository(self.OUTPUT_DIR_TMP):
-            feedback.pushConsoleInfo("Automatic Step: Checking if the output directory has the right git repository.")
-            outputDirectoryRepositoryName = GitHub.getRepoName(self.OUTPUT_DIR_TMP)
-            if (outputDirectoryRepositoryName != ghRepository):
-                feedback.pushConsoleInfo("Error: The output directory has the repository: \"" 
-                                        + outputDirectoryRepositoryName + "\" and the specified repository is: \"" 
-                                        + ghRepository + "\".\nPlease, create a new output directory or change the repository name to match: \"" 
-                                        + outputDirectoryRepositoryName + "\".")
-                return False
+
+        feedback.pushConsoleInfo("Automatic Step: Checking if the output directory has the right git repository.")
+        error = self.checkOutputDirectoryMatchRepository(parameters, context)
+        if len(error) > 0:
+            feedback.pushConsoleInfo(error)
+            return False
+        
         feedback.pushConsoleInfo("Automatic Step: Checking remote repository.")
         if not UTILS.isQgisSupported():
             feedback.pushConsoleInfo("Warning: This plugin was developped for QGIS 3.x+ please consider update.\n" + (("The identified QGIS Verison is " + UTILS.getQGISversion()) if UTILS.getQGISversion() is not None else "Version could not be idenfied."))
