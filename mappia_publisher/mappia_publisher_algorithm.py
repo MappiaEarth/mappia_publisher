@@ -758,6 +758,23 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
 
         if GitHub.testLogin(self.parameterAsString(parameters, self.GITHUB_USER, context), self.ghPassword) == False:
             return False, self.tr('Error: Invalid user or password. Please visit the link https://github.com/login and check your password.')
+
+        try:
+            gitExe = GitHub.findGitExe(parameters[self.GIT_EXECUTABLE], self.found_git, None, False)
+
+            if gitExe:
+                GitHub.prepareEnvironment(gitExe)
+                outputDirecotry = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
+
+                if GitHub.isGitRepository(outputDirecotry):
+                    outputDirectoryRepositoryName = GitHub.getRepoName(outputDirecotry)
+
+                    if outputDirectoryRepositoryName != gitRepository:
+                        return False, self.tr('The output directory has the repository: "' + outputDirectoryRepositoryName + '" and the specified repository is: "' + gitRepository + '".\nPlease, create a new output directory or change the repository name to match: "' + outputDirectoryRepositoryName + '".')
+        except Exception as e:
+            # If failed to find the git executable just ignore it.
+            pass
+                
         return super().checkParameterValues(parameters, context)
 
 
@@ -771,7 +788,17 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
         if not self.isPluginUpdated():
             feedback.pushConsoleInfo("Warning: Please update your Mappia plugin, there is a new versison.")
         print("selfPass " + self.ghPassword)
+
         gitExe = GitHub.findGitExe(parameters[self.GIT_EXECUTABLE], self.found_git, feedback, mustAskUser)
+        feedback.pushConsoleInfo("Automatic Step: Checking git executable.")
+        if gitExe:
+            GitHub.prepareEnvironment(gitExe)
+        feedback.pushConsoleInfo(gitExe)
+        if not gitExe or not os.path.isfile(gitExe):
+            feedback.pushConsoleInfo("Select your git executable program.\n" + str(
+                gitExe) + "\nIt can be downloadable at: https://git-scm.com/downloads")
+            return False
+        
         self.OUTPUT_DIR_TMP = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
         if len(self.OUTPUT_DIR_TMP) <= 0:
             self.OUTPUT_DIR_TMP = tempfile.mkdtemp()
@@ -787,14 +814,6 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
         feedback.pushConsoleInfo("Automatic Step: Checking remote repository.")
         if not UTILS.isQgisSupported():
             feedback.pushConsoleInfo("Warning: This plugin was developped for QGIS 3.x+ please consider update.\n" + (("The identified QGIS Verison is " + UTILS.getQGISversion()) if UTILS.getQGISversion() is not None else "Version could not be idenfied."))
-        feedback.pushConsoleInfo("Automatic Step: Checking git executable.")
-        if gitExe:
-            GitHub.prepareEnvironment(gitExe)
-        feedback.pushConsoleInfo(gitExe)
-        if not gitExe or not os.path.isfile(gitExe):
-            feedback.pushConsoleInfo("Select your git executable program.\n" + str(
-                gitExe) + "\nIt can be downloadable at: https://git-scm.com/downloads")
-            return False
         feedback.pushConsoleInfo("Automatic Step: Configuring git parameters.")
         if (not GitHub.existsRepository(ghUser, ghRepository, ghPassword)) and mustAskUser and (QMessageBox.Yes != QMessageBox.question(
                 None,

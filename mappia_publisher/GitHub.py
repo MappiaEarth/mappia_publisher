@@ -492,7 +492,7 @@ class GitHub:
     def getRepoName(folder):
         import git
         
-        doesPathExists = os.path.exists(folder)
+        doesPathExists = folder is not None and os.path.exists(folder)
         isPathDirectory = os.path.isdir(folder)
         if not doesPathExists or not isPathDirectory or not GitHub.isGitRepository(folder):
             return ""
