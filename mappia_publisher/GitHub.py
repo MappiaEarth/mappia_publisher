@@ -478,6 +478,26 @@ class GitHub:
             return json.loads(resp.text)
         else:
             return None
+    
+    @staticmethod
+    def isGitRepository(folder):
+        import git
+        
+        try:
+            return git.Repo(folder).git_dir is not None
+        except:
+            return False
+
+    @staticmethod
+    def getRepoName(folder):
+        import git
+        
+        doesPathExists = folder is not None and os.path.exists(folder)
+        isPathDirectory = os.path.isdir(folder)
+        if not doesPathExists or not isPathDirectory or not GitHub.isGitRepository(folder):
+            return ""
+        
+        return git.Repo(folder).remote().url.rstrip("/").split("/")[-1]
 
     # @staticmethod
     # def getAccessToken(curUser, curPass):
