@@ -540,10 +540,6 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
     def preprocessParameters(self, parameters):
         print('preprocessParameters')
         MappiaPublisherAlgorithm.ghPassword = ''
-        result = GitHub.getGitCredentials(parameters[self.GITHUB_USER], self.ghPassword, parameters[self.ASK_USER])
-        parameters[self.GITHUB_USER], MappiaPublisherAlgorithm.ghPassword = result
-        print('prepResult' + json.dumps(result))
-        print('instant self.ghPassword : ' + MappiaPublisherAlgorithm.ghPassword )
         return parameters
 
     def isPointLayer(self, layer, feedback):
@@ -752,26 +748,27 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
             if max_zoom < min_zoom:
                 return self.tr("Invalid zoom levels range.")
             else:
-                return ""
+                return None
 
         def checkLayerList(self, parameters, context):
             if len(self.parameterAsLayerList(parameters, self.LAYERS, context)) <= 0:
                 return self.tr("Please select one map or more.")
             else:
-                return ""
+                return None
             
         def checkGitRepositoryName(self, parameters, context):
             gitRepository = self.parameterAsString(parameters, self.GITHUB_REPOSITORY, context)
             if ' ' in gitRepository:
                 return self.tr("Space is not allowed in Repository name (remote folder).")
             else:
-                return ""
+                return None
         
         def checkCredentials(self, parameters, context):
+            self.findGithubUserName(parameters)
             if GitHub.testLogin(self.parameterAsString(parameters, self.GITHUB_USER, context), self.ghPassword) == False:
                 return self.tr("Invalid user or password. Please visit the link https://github.com/login and check your password.")
             else:
-                return ""
+                return None
         
         def checkOutputDirectory(self, parameters, context):
             try:
@@ -783,29 +780,46 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
             except Exception as e:
                 pass # If failed to find the git executable just ignore it.
             
-            return ""
+            return None
 
         print('checkParameterValues()')
 
         errors = []
         
-        errors.append(checkZoomLevels(self, parameters, context))
-        errors.append(checkLayerList(self, parameters, context))
-        errors.append(checkGitRepositoryName(self, parameters, context))
-        errors.append(checkCredentials(self, parameters, context))
-        errors.append(checkOutputDirectory(self, parameters, context))
+        error = checkZoomLevels(self, parameters, context)
+        if error != None:
+            errors.append(error)
+        
+        error = checkLayerList(self, parameters, context)
+        if error != None:
+            errors.append(error)
+        
+        error = checkGitRepositoryName(self, parameters, context)
+        if error != None:
+            errors.append(error)
+        
+        error = checkOutputDirectory(self, parameters, context)
+        if error != None:
+            errors.append(error)
 
-        errors = list(filter(None, errors))
-        if len(errors) == 0:
-            return super().checkParameterValues(parameters, context)
+        if len(errors) > 0:
+            errorMessage = "Erros:\n"
+            errorsCount = 1
+            for error in errors:
+                errorMessage += str(errorsCount) + ") " + error + "\n\n"
+                errorsCount += 1
+            return False, errorMessage
 
-        errorMessage = "Erros:\n"
-        errorsCount = 1
-        for error in errors:
-            errorMessage += str(errorsCount) + ". " + error + "\n"
-            errorsCount += 1
+        error = checkCredentials(self, parameters, context)
+        if error != None:
+            errorMessage = "Erros:\n\n1) " + error
+            return False, errorMessage
 
-        return False, errorMessage
+        return super().checkParameterValues(parameters, context)    
+    
+    def findGithubUserName(self, parameters):
+        result = GitHub.getGitCredentials(parameters[self.GITHUB_USER], self.ghPassword, parameters[self.ASK_USER])
+        parameters[self.GITHUB_USER], MappiaPublisherAlgorithm.ghPassword = result
     
     def checkOutputDirectoryMatchRepository(self, parameters, context):
         outputDirecotry = self.parameterAsString(parameters, self.OUTPUT_DIRECTORY, context)
@@ -815,9 +829,9 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
             outputDirectoryRepositoryName = GitHub.getRepoName(outputDirecotry)
 
             if outputDirectoryRepositoryName != gitRepository:
-                return self.tr('The output directory has the repository: "' + outputDirectoryRepositoryName + '" and the specified Repository name is: "' + gitRepository + '".\nPlease, create a new output directory or change the repository name to match: "' + outputDirectoryRepositoryName + '".')
+                return self.tr('The Repository name "' + gitRepository + '" does not match the output reposiory: ' + outputDirectoryRepositoryName + '".')
         
-        return ""
+        return None
 
     def prepareAlgorithm(self, parameters, context, feedback):
         print("prepareAlgorithm() Started: Verify the input options.")
@@ -846,7 +860,7 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
 
         feedback.pushConsoleInfo("Automatic Step: Checking if the output directory has the right git repository.")
         error = self.checkOutputDirectoryMatchRepository(parameters, context)
-        if len(error) > 0:
+        if error != None:
             feedback.pushConsoleInfo(error)
             return False
         
