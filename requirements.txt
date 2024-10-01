@@ -1,0 +1,5 @@
+ddt
+defusedexpat
+gitdb_speedups
+nose
+ordereddict
