@@ -23,14 +23,26 @@ except:
 
 try:
     from UTILS import UTILS
-    from QMessageBox import QMessageBox
 except:
+    print("Not in Dinamica Code")
     pass  # Not in Dinamica Code
 
 try:
     from .UTILS import UTILS
+except:
+    print("Not in Dinamica Code")
+    pass  # Not in Dinamica Code
+
+try:
+    from QMessageBox import QMessageBox
+except:
+    print("Not in QGIS")
+    pass  # Not in Dinamica Code
+
+try:
     from qgis.PyQt.QtWidgets import QMessageBox
 except:
+    print("Not in QGIS")
     pass  # Not in QGIS
 
 
@@ -69,7 +81,7 @@ class GitHub:
                                                            "Click 'YES' to start download and continue, otherwise please select the executable manually.",
                                                            defaultButton=QMessageBox.Yes,
                                                            buttons=(
-                                                                       QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel))
+                                                                   QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel))
 
         if not ("Windows" in platform.system() or "CYGWIN_NT" in platform.system()):
             QMessageBox.question(None, "Failed to find GIT executable",
@@ -231,7 +243,7 @@ class GitHub:
                 response = not mustAskUser or QMessageBox.question(None, "Local repository is not clean.",
                                                                    "The folder have local changes, we need to fix to continue.\nClick 'DISCARD' to discard changes, 'YES' to commit changes, otherwise click 'CANCEL' to cancel and resolve manually.",
                                                                    buttons=(
-                                                                               QMessageBox.Discard | QMessageBox.Yes | QMessageBox.Cancel),
+                                                                           QMessageBox.Discard | QMessageBox.Yes | QMessageBox.Cancel),
                                                                    defaultButton=QMessageBox.Discard)
                 if not mustAskUser or response == QMessageBox.Yes:
                     feedback.pushConsoleInfo("Pulling remote repository changes to your directory.")
@@ -347,12 +359,10 @@ class GitHub:
 
         feedback.pushConsoleInfo("Creating a new branch")
         repo.git.branch("-M", "main")
-        
         feedback.pushConsoleInfo("Pushing changes to remote repository.")
         GitHub.pushChanges(repo, ghUser, ghRepository, ghPassword, feedback)
         sleep(waitInitializeTime)
-        
-        return True#GitHub.isRepositoryInitialized(ghUser, ghRepository)
+        return True  # GitHub.isRepositoryInitialized(ghUser, ghRepository)
 
     @staticmethod
     def runLongTask(function, feedback, waitMessage="Please Wait", secondsReport=60, *args, **kwArgs):
@@ -385,8 +395,8 @@ class GitHub:
             curUser = ''
         if (curPass is None or not curPass or not curUser) or (
                 GitHub.testLogin(curUser, curPass) == False and (mustAskUser or QMessageBox.question(
-                None, "Credentials required",
-                "Please inform your credentials, could we open login link for you?") == QMessageBox.Yes)):
+            None, "Credentials required",
+            "Please inform your credentials, could we open login link for you?") == QMessageBox.Yes)):
             url = 'https://github.com/login/oauth/authorize?redirect_uri=https://csr.ufmg.br/imagery/get_key.php&client_id=10b28a388b0e66e87cee&login=' + curUser + '&scope=read:user%20repo&state=' + state
             credentials = {
                 'value': None
@@ -435,6 +445,39 @@ class GitHub:
         return GitInteractive.pushChanges(repo, user, repository, password, feedback)
 
     @staticmethod
+    def checkForPrimaryBranch(repo, feedback):
+        # Check if 'main' branch exists locally
+        branches = repo.branches
+
+        newBranchName = 'main'
+        oldBranchName = 'master'
+
+        # Print each branch name
+        print("Branches in the repository:")
+        for branch in branches:
+            feedback.pushConsoleInfo("Branch found: " + branch.name)
+
+        try:
+            feedback.pushConsoleInfo("Before fetch changes.")
+            UTILS.runLongTask(repo.git.fetch, feedback, 'Please wait, fetching changes.', 30,
+                              GitHub.getGitUrl(user, ghRepository), newBranchName)
+        except:
+            pass
+
+        if newBranchName not in branches and oldBranchName in branches:
+            # Create 'main' branch from current HEAD
+            feedback.pushConsoleInfo("Git: Doing checkout to old default repository : " + oldBranchName)
+            UTILS.runLongTask(repo.git.checkout, feedback, 'Please wait reading the checkout', 30, oldBranchName)
+            repo.git.branch('-m', oldBranchName, newBranchName)
+            feedback.pushConsoleInfo(f"Branch '{old_branch_name}' has been renamed to '{new_branch_name}'.")
+        elif newBranchName not in branches and oldBranchName not in branches:
+            # There is no main or master we will consider to create the main branch
+            repo.git.branch(newBranchName)
+            feedback.pushConsoleInfo("Main Branch created, please set it as Default on your git repository")
+        else:
+            feedback.pushConsoleInfo("Main branch was correctly found on the repository")
+
+    @staticmethod
     def publishTilesToGitHub(folder, ghUser, gitRepository, feedback, version, password=None):
         import git
         feedback.pushConsoleInfo('Github found commiting to your account.')
@@ -444,6 +487,7 @@ class GitHub:
         now = datetime.now()
         # https://stackoverflow.com/questions/6565357/git-push-requires-username-and-password
         # repo.git.config("credential.helper", " ", "store") #FIXME git: 'credential-' is not a git command. See 'git --help
+        GitHub.checkForPrimaryBranch(repo, feedback)
         GitHub.tryPullRepository(repo, ghUser, gitRepository, feedback)  # Danilo
         feedback.pushConsoleInfo('Git: Add all generated tiles to your repository.')
         GitHub.addFiles(repo, ghUser, gitRepository, feedback)
@@ -478,11 +522,10 @@ class GitHub:
             return json.loads(resp.text)
         else:
             return None
-    
+
     @staticmethod
     def isGitRepository(folder):
         import git
-        
         try:
             return git.Repo(folder).git_dir is not None
         except:
@@ -491,12 +534,10 @@ class GitHub:
     @staticmethod
     def getRepoName(folder):
         import git
-        
         doesPathExists = folder is not None and os.path.exists(folder)
         isPathDirectory = os.path.isdir(folder)
         if not doesPathExists or not isPathDirectory or not GitHub.isGitRepository(folder):
             return ""
-        
         return git.Repo(folder).remote().url.rstrip("/").split("/")[-1]
 
     # @staticmethod
@@ -630,7 +671,8 @@ class GitHub:
         response = GitHub._request('POST', GitHub.githubApi + 'repos/' + user + "/" + repository + "/releases",
                                    token=password, data=json.dumps(data), headers={'Content-Type': 'application/json'})
         time.sleep(waitGhUpdate)
-        if (response.status_code == 422) and GitHub.getRelease(user, repository, password, GitHub.releaseName) is not None:  # vou considerar q ja está criado
+        if (response.status_code == 422) and GitHub.getRelease(user, repository, password,
+                                                               GitHub.releaseName) is not None:  # vou considerar q ja está criado
             pass
         else:
             response.raise_for_status()

@@ -170,7 +170,7 @@ class UTILS:
 
     @staticmethod
     def sendReport(dictParam):
-        req = requests.get(url='http://csr.ufmg.br/imagery/save_reports.php?' + urlencode(dictParam))
+        req = requests.get(url='http://csr.ufmg.br/imagery/save_mappia_publisher_reports.php?' + urlencode(dictParam))
         if req.status_code == HTTPStatus.OK:
             return req.text
         else:

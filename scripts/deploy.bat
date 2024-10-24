@@ -1,3 +1,5 @@
+@echo off
+
 rem set OSGEO=C:\OSGeo4W64
 rem set PATH=%OSGEO%\apps\Python37\Scripts\;%OSGEO%\bin\python3.exe;%PATH%
 rem SET OSGEO4W_ROOT=%OSGEO%
