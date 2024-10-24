@@ -251,7 +251,7 @@ class DirectoryWriter:
         renderSettings.setOutputSize(size)
         image = QImage(size, QImage.Format_ARGB32_Premultiplied)
         image.fill(Qt.transparent)
-        dpm = renderSettings.outputDpi() / 25.4 * 1000
+        dpm = round(renderSettings.outputDpi() / 25.4 * 1000)
         image.setDotsPerMeterX(dpm)
         image.setDotsPerMeterY(dpm)
         painter = QPainter(image)
@@ -684,7 +684,7 @@ class MappiaPublisherAlgorithm(QgsProcessingAlgorithm):
         renderSettings.setOutputSize(size)
         image = QImage(size, renderSettings.outputImageFormat())
         image.fill(Qt.transparent)
-        dpm = renderSettings.outputDpi() / 25.4 * 1000
+        dpm = round(renderSettings.outputDpi() / 25.4 * 1000)
         image.setDotsPerMeterX(dpm)
         image.setDotsPerMeterY(dpm)
         painter = QPainter(image)
