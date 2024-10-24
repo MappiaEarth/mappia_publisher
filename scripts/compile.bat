@@ -1,10 +1,10 @@
+if not "%envvar_set%"=="true" (
+    echo "Loading environemnt variables on: setEnvironments.bat"
+    call %~dp0/setEnvironments.bat
+)
+
 %~d0
 cd %~dp0../src/
-
-@echo off
-call "C:\OSGeo4W64\bin\o4w_env.bat"
-call "C:\OSGeo4W64\bin\qt5_env.bat"
-call "C:\OSGeo4W64\bin\py3_env.bat"
 
 @echo on
 pyrcc5 -o resources.py resources.qrc
