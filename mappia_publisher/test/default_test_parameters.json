@@ -1,0 +1,15 @@
+{
+    "GITHUB_REPOSITORY": "Mappia_Example_2",
+    "LAYERS": [
+        ".\\test_inputs\\mozambique\\mozambique.shp",
+        ".\\test_inputs\\states\\states.shp",
+        ".\\test_inputs\\massas_dagua_fbds_mg\\massas_dagua_fbds_mg.shp",
+        ".\\test_inputs\\paises\\paises.shp"
+    ],
+    "ZOOM_MAX": 9,
+    "INCLUDE_DOWNLOAD": true,
+    "GIT_EXECUTABLE": "C:\\Danilo\\Programas\\Portable Git\\bin\\git.exe",
+    "GITHUB_USER": "asfixia",
+    "ASK_USER": false,
+    "OUTPUT_DIRECTORY": "C:\\Users\\danilo\\AppData\\Local\\Temp\\mappia_teste_9"
+}

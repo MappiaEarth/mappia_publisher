@@ -3,13 +3,39 @@
 echo Setting environment Variables:
 
 rem FILE PATH to QGIS with GRASS to "o4w_env.bat"
-rem set OSGEO=C:\OSGeo4W64
 set OSGEO=C:\Program Files\QGIS 3.14
+rem Example: "'C:\Program Files\QGIS 3.14\bin'\qgis-bin.exe"
+set QGIS_DIR=%OSGEO%\bin
 set GIT_BIN=C:\Danilo\Programas\PortableGit\bin\
 set GRASS_BASEPATH=%OSGEO%\apps\grass\grass*
 set PYTHONHOME=%OSGEO%\apps\Python*
 set QT_BIN=%OSGEO%\apps\Qt*
 set IDE_PATH=C:\Program Files\JetBrains\PyCharm 2023.2.5\bin\pycharm64.exe
+
+
+
+
+set PATH=%QGIS_DIR%;%QGIS_DIR%\apps\qgis;%QGIS_DIR%\apps\qgis\bin;%QGIS_DIR%\apps\qgis\python;%QGIS_DIR%\apps\qgis\python\qgis;%QT_BIN%\plugins;%PATH%
+REM Define the QGIS installation path
+SET QGIS_PATH=%QGIS_DIR%\apps\qgis
+
+REM Add QGIS to Python's system path
+SET PYTHONPATH=%PYTHONPATH%;%QGIS_PATH%\python;%QGIS_PATH%\python\qgis;%QGIS_PATH%\python\qgis\PyQt;%QGIS_PATH%\python\plugins
+
+REM Set the required QGIS environment variables
+SET QT_QPA_PLATFORM_PLUGIN_PATH=%QGIS_PATH%\Qt5\plugins
+SET GDAL_DATA=%QGIS_PATH%\share\gdal
+SET QGIS_PREFIX_PATH=%QGIS_PATH%
+SET PROJ_LIB=%QGIS_PATH%\share\proj
+
+REM Add QGIS binaries to the system PATH
+SET PATH=%QGIS_PATH%\bin;%PATH%
+
+
+
+
+
+
 
 call :setMatchingPath "%GRASS_BASEPATH%" "GRASS_BASEPATH"
 call :setMatchingPath "%PYTHONHOME%" "PYTHONHOME"
@@ -26,7 +52,7 @@ call "%OSGEO%\bin\py3_env.bat"
 call "%GRASS_BASEPATH%\etc\env.bat"
 
 set QGIS_PYTHON=%APPDATA%\Python\%PYTHON_VER_FOLDER%
-set PATH=%QGIS_PYTHON%\Scripts;%OSGEO%\apps\qgis\bin;%PYTHONHOME%\Scripts\;%QT_BIN%;%GIT_BIN%;%PYTHONHOME%\Scripts\;%PYTHONHOME%\DLLs\;%OSGEO4W_ROOT%\apps\qgis\bin;%GRASS_BASEPATH%\lib;%PATH%
+set PATH=%~dp0..\mappia_publisher\gitdb;%~dp0..\mappia_publisher\ext\gitdb;%QGIS_PYTHON%\Scripts;%OSGEO%\apps\qgis\bin;%PYTHONHOME%\Scripts\;%QT_BIN%;%GIT_BIN%;%PYTHONHOME%\Scripts\;%PYTHONHOME%\DLLs\;%OSGEO4W_ROOT%\apps\qgis\bin;%GRASS_BASEPATH%\lib;%PATH%
 echo PythonFolder: %PYTHON_VER_FOLDER% fullPath: %QGIS_PYTHON%
 
 set PYTHONPATH=%PYTHONPATH%;%OSGEO%\apps\qgis\python
@@ -36,14 +62,8 @@ set VSI_CACHE=TRUE
 set VSI_CACHE_SIZE=1000000
 set QT_PLUGIN_PATH=%OSGEO%\apps\qgis\qtplugins;%QT_BIN%\plugins
 set QGIS_PLUGINPATH=%OSGEO%\apps\qgis\qtplugins;%QT_BIN%\plugins
-rem set PATH=%PYTHONPATH%;%PATH%
-rem easy_install pb_tool
-rem python -m pip install pb_tool
 
-python -m pip install pickled
-python -m pip install pyproj
-python -m pip install pb_tool
-rem If fail to install pb_tool, try to use: easy_install pb_tool
+rem python -m pip install pickled pyproj pb_tool
 
 rem if not "%envvar_set%"=="true" (
 rem     echo Setting environment path variable

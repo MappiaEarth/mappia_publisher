@@ -1,0 +1,17 @@
+[FIELD]
+# Caso queira modificar o nome do atributo basta descomentar a linha
+#NATUREZA = 'Natureza'
+#RIO = 'Rio'
+#SETOR = 'Setor'
+#GEOCODIGO = 'Geocódigo'
+HIDRO = 'Tipo de informação'
+#UF = 'Unidade da federação'
+MUNICIPIO = 'Município'
+
+[PUBLISHING]
+default field = 'HIDRO' # Se estiver vazio: Shape mostra 'Geometry', Raster mostra o primeiro layer.
+download = true # true ou false, indica se vai ser possivel fazer o download do mapa
+#Ex: para desabilitar os layers 'codigo' e 'codigo2', seria: disabled = ['codigo','codigo2']
+disabled = ['Geometry','GEOCODIGO','UF','NATUREZA','RIO','SETOR'] # Lista de campos que devem ser excluidos da visualização. ( A lista pode ser em uma linha ou em várias )
+listable = false # true ou false, indica se o mapa deve estar visivel na listagem
+is rgb = false # true caso o mapa deva ser publicado em RGB, false caso contrário.

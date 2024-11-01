@@ -1,0 +1,44 @@
+[IDENTIFICATION]
+title = 'Massas d\'Água'
+description = 'Massas d\'água do estado de Minas Gerais.'
+
+source = 'Fundação Brasileira para o Desenvolvimento Sustentável - FBDS
+Link para download: http://geo.fbds.org.br/'
+citation = 'Fundação Brasileira para o Desenvolvimento Sustentável - FBDS (2013) Mapeamento em Alta Resolução dos Biomas Brasileiros (base digital georreferenciada). Rio de Janeiro, Brasil: FBDS. Adaptado por Centro de Sensoriamento Remoto - CSR/UFMG.'
+original scale = 
+thematic category = 'hidrografiaHidrologia (043)'
+
+
+[SPATIAL REPRESENTATION SYSTEM]
+creation date = 2023
+original format = 'vetorial (001)'
+coordinate system representation = 'PROJCS["South_America_Albers_Equal_Area_Conic_SIRGAS",
+    GEOGCS["GCS_SIRGAS_2000",
+        DATUM["SIRGAS_2000",
+            SPHEROID["GRS_1980",6378137.0,298.257222101]],
+        PRIMEM["Greenwich",0.0],
+        UNIT["Degree",0.0174532925199433]],
+    PROJECTION["Albers_Conic_Equal_Area"],
+    PARAMETER["False_Easting",0.0],
+    PARAMETER["False_Northing",0.0],
+    PARAMETER["longitude_of_center",-60.0],
+    PARAMETER["Standard_Parallel_1",-5.0],
+    PARAMETER["Standard_Parallel_2",-42.0],
+    PARAMETER["latitude_of_center",-32.0],
+    UNIT["Meter",1.0]]'
+
+[ATTRIBUTE TABLE]
+attribute table = [
+['NATUREZA', 'Natureza'],
+['RIO', 'Rio'],
+['SETOR', 'Setor'],
+['GEOCODIGO', 'Geocódigo do município'],
+['HIDRO', 'Tipo de informação'],
+['CD_UF', 'Código do estado'],
+['UF', 'Unidade da federação'],
+['MUNICIPIO', 'Município'],
+]
+
+[METAMETADATA]
+updated = 2023/02/01
+publishers = 'Centro de Sensoriamento Remoto - CSR/UFMG'
