@@ -1,5 +1,5 @@
-from .OptionsCfg import OptionsCfg
-from .UTILS import UTILS
+from OptionsCfg import OptionsCfg
+from UTILS import UTILS
 from qgis.PyQt.QtCore import QCoreApplication
 from qgis.core import (QgsProject,
                        QgsLogger,

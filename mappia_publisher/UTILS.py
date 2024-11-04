@@ -2,6 +2,10 @@ import re
 import time
 import math
 import os
+from collections import defaultdict
+
+import numpy as np
+
 import unicodedata
 import tempfile
 from http import HTTPStatus
@@ -9,6 +13,7 @@ from urllib.parse import urlencode
 import requests
 from xml.sax.saxutils import escape
 from zipfile import ZipFile
+
 
 isDinamica = False
 try:
@@ -31,6 +36,10 @@ except:
 
 import random
 import string
+
+
+from .MetaTile import MetaTile
+from .Tile import Tile
 
 class UTILS:
 
@@ -65,6 +74,27 @@ class UTILS:
                 if os.path.isfile(filePath):
                     total = total + os.path.getsize(filePath)
         return total
+
+    @staticmethod
+    def get_metatiles(extent, zoom, size=4):
+        # west_edge, south_edge, east_edge, north_edge = extent
+        # [extent.xMinimum(), extent.yMinimum(), extent.xMaximum(), extent.yMaximum()]
+        left_tile, top_tile = UTILS.deg2num(extent.yMaximum(), extent.xMinimum(), zoom)
+        right_tile, bottom_tile = UTILS.deg2num(extent.yMinimum(), extent.xMaximum(), zoom)
+
+        #metatiles = {}
+        metatiles = defaultdict(MetaTile)
+        for i, x in enumerate(range(left_tile, right_tile + 1)):
+            meta_x = i // size
+            for j, y in enumerate(range(top_tile, bottom_tile + 1)):
+                meta_y = j // size
+                meta_key = '{}:{}'.format(meta_x, meta_y)
+                # if meta_key not in metatiles:
+                #     metatiles[meta_key] = MetaTile()  # Possible MemoryError (limit the dict size) #TODO add a check.
+                metatile = metatiles[meta_key]
+                metatile.add_tile(i % size, j % size, Tile(x, y, zoom))
+
+        return list(metatiles.values())
 
     @staticmethod
     def getQGISversion():
@@ -118,6 +148,10 @@ class UTILS:
                 return zipFile
         return None
 
+    @staticmethod
+    def getBasename(fullPath, includeExt=False):
+        baseName = os.path.basename(fullPath)
+        return baseName if includeExt else os.path.splitext(baseName)[0]
 
     @staticmethod
     def runLongTask(function, feedback, waitMessage="Please Wait", secondsReport=60, *args, **kwArgs):
@@ -125,10 +159,10 @@ class UTILS:
         # feedback.setProgress(1)
         stepTimer = 0.5
         totalTime = 0
-        with futures.ThreadPoolExecutor(max_workers=1) as executor:
+        with futures.ThreadPoolExecutor(max_workers=2) as executor:
             job = executor.submit(function, *args, **kwArgs)
             elapsedTime = 0
-            while job.done() == False:
+            while not job.done():
                 time.sleep(stepTimer)
                 elapsedTime = elapsedTime + stepTimer
                 totalTime = totalTime + stepTimer
@@ -211,14 +245,6 @@ class UTILS:
         ytile = int(min((1.0 - math.asinh(math.tan(lat_rad)) / math.pi) / 2.0 * n, n))
         return (xtile, ytile)
 
-    # Math functions taken from https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames #spellok
-    @staticmethod
-    def num2deg(xtile, ytile, zoom):
-        n = 2.0 ** zoom
-        lon_deg = xtile / n * 360.0 - 180.0
-        lat_rad = math.atan(math.sinh(math.pi * (1 - 2 * ytile / n)))
-        lat_deg = math.degrees(lat_rad)
-        return (lat_deg, lon_deg)
 
     # This function gets a system variable
     # it was necessary to use this instead of os.environ["PATH"] because QGIS overwrites the path variable

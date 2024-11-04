@@ -8,5 +8,8 @@ scripts/deploy.bat
 scripts/deploy.bat
 mappia_publisher/options.json
 *.bak
+aaa/test/default_test_parameters.json
 */test/*
-/mappia_publisher/zip_build
+options.json
+mappia_publisher/zip_build
+mappia_publisher/options.json

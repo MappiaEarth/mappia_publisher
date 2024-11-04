@@ -18,11 +18,11 @@ if not isDinamica:
     except:
         pass #Not in QGIS
 
-    try:
-        from UTILS import UTILS
-        from xmltodict import xmltodict
-    except:
-        pass #Not in Dinamica Code
+try:
+    from UTILS import UTILS
+    from xmltodict import xmltodict
+except:
+    pass #Not in Dinamica Code
 
 from collections import OrderedDict
 import collections

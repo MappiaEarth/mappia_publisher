@@ -22,12 +22,6 @@ except:
     isDinamica = False
 
 try:
-    from UTILS import UTILS
-except:
-    print("Not in Dinamica Code")
-    pass  # Not in Dinamica Code
-
-try:
     from .UTILS import UTILS
 except:
     print("Not in Dinamica Code")
@@ -248,9 +242,9 @@ class GitHub:
                 if not mustAskUser or response == QMessageBox.Yes:
                     feedback.pushConsoleInfo("Pulling remote repository changes to your directory.")
                     GitHub.tryPullRepository(repo, ghUser, ghRepository, feedback)  # Danilo
-                    feedback.pushConsoleInfo("Adding all files in folder")
+                    feedback.pushConsoleInfo("Adding all files")
                     GitHub.addFiles(repo, ghUser, ghRepository, feedback)
-                    feedback.pushConsoleInfo("Adding all files in folder")
+                    feedback.pushConsoleInfo("Commit all changes")
                     GitHub.gitCommit(repo, msg="QGIS - Adding all files in folder " + datetime.now().strftime(
                         "%d/%m/%Y %H:%M:%S"), feedback=feedback)
                     feedback.pushConsoleInfo("QGIS - Sending changes to Github")
@@ -336,8 +330,7 @@ class GitHub:
         return GitHub.existsRepositoryFile(ghUser, ghRepository, 'README.md')
 
     @staticmethod
-    def initializeRepository(outputDir, ghUser, ghRepository, ghPassword, feedback, waitInitializeTime=4,
-                             waitCreateTime=4):
+    def initializeRepository(outputDir, ghUser, ghRepository, ghPassword, feedback, waitInitializeTime=5, waitCreateTime=6):
         feedback.pushConsoleInfo("Please wait, creating repository and waiting some seconds to github update.")
         sleep(waitCreateTime)
         feedback.pushConsoleInfo("Initializing repository.")
@@ -388,6 +381,7 @@ class GitHub:
             # UTILS.checkForCanceled(feedback)
             return job.result()
 
+    #TODO Should deal with the 'valid_until' parameter to avoid rechecking for access.
     @staticmethod
     def getGitCredentials(curUser, curPass, mustAskUser):
         state = UTILS.randomString()
@@ -396,17 +390,17 @@ class GitHub:
         if (curPass is None or not curPass or not curUser) or (
                 GitHub.testLogin(curUser, curPass) == False and (mustAskUser or QMessageBox.question(
             None, "Credentials required",
-            "Please inform your credentials, could we open login link for you?") == QMessageBox.Yes)):
+            "Please provide your credentials. Would you like us to open the login link for you?") == QMessageBox.Yes)):
             url = 'https://github.com/login/oauth/authorize?redirect_uri=https://csr.ufmg.br/imagery/get_key.php&client_id=10b28a388b0e66e87cee&login=' + curUser + '&scope=read:user%20repo&state=' + state
             credentials = {
                 'value': None
             }
-            GitHub.getCredentials(state)
+            GitHub.getCredentials(state, curUser)
             webbrowser.open(url, 1)
             isFirstOpen = True
 
             def checkLoginValidation(btn, timeSpent):
-                credentials['value'] = credentials['value'] or GitHub.getCredentials(state)
+                credentials['value'] = credentials['value'] or GitHub.getCredentials(state, curUser)
                 if credentials['value'] and not mustAskUser:
                     btn.done(0)
                 return True
@@ -420,32 +414,30 @@ class GitHub:
                                                              "Please confirm credentials at Github site to continue",
                                                              checkLoginValidation,
                                                              buttons=QMessageBox.Yes | QMessageBox.No)
-                credentials['value'] = credentials['value'] or GitHub.getCredentials(state)
+                credentials['value'] = credentials['value'] or GitHub.getCredentials(state, curUser)
                 if response == QMessageBox.Yes and not credentials['value']:
                     webbrowser.open(url, 2)
                 elif response != QMessageBox.Yes and not credentials['value']:
-                    print("OPA1")
                     return [None, None]
-            print("OPA2")
             print(json.dumps(credentials))
             return [credentials['value']['user'], credentials['value']['token']]
-        print("OPA3")
         return [curUser, curPass]
 
+    #FIXME: Using runLongTask is causing a deadlock, leading to QGIS freezing. It should be reviewed to prevent these issues.
     @staticmethod
     def addFiles(repo, user, repository, feedback):
-        return GitInteractive.addFiles(repo, user, repository, feedback)
+        return GitInteractive.addFiles(repo, user, repository, feedback) #UTILS.runLongTask(GitInteractive.addFiles, feedback, 'Please wait while we add the folder and files to your repository.', 30, repo, user, repository, feedback)
 
     @staticmethod
     def gitCommit(repo, msg, feedback):
-        return GitInteractive.gitCommit(repo, msg, feedback)
+        return GitInteractive.gitCommit(repo, msg, feedback) #UTILS.runLongTask(GitInteractive.gitCommit, feedback, 'Please wait, committing repository changes.', 30, repo, msg, feedback)
 
     @staticmethod
     def pushChanges(repo, user, repository, password, feedback):
-        return GitInteractive.pushChanges(repo, user, repository, password, feedback)
+        return GitInteractive.pushChanges(repo, user, repository, password, feedback) #UTILS.runLongTask(GitInteractive.pushChanges, feedback, 'Please wait, pushing repository changes.', 30, repo, user, repository, password, feedback)
 
     @staticmethod
-    def checkForPrimaryBranch(repo, feedback):
+    def checkForPrimaryBranch(repo, feedback, ghUser, ghRepository):
         # Check if 'main' branch exists locally
         branches = repo.branches
 
@@ -460,7 +452,7 @@ class GitHub:
         try:
             feedback.pushConsoleInfo("Before fetch changes.")
             UTILS.runLongTask(repo.git.fetch, feedback, 'Please wait, fetching changes.', 30,
-                              GitHub.getGitUrl(user, ghRepository), newBranchName)
+                              GitHub.getGitUrl(ghUser, ghRepository), newBranchName)
         except:
             pass
 
@@ -469,7 +461,7 @@ class GitHub:
             feedback.pushConsoleInfo("Git: Doing checkout to old default repository : " + oldBranchName)
             UTILS.runLongTask(repo.git.checkout, feedback, 'Please wait reading the checkout', 30, oldBranchName)
             repo.git.branch('-m', oldBranchName, newBranchName)
-            feedback.pushConsoleInfo(f"Branch '{old_branch_name}' has been renamed to '{new_branch_name}'.")
+            feedback.pushConsoleInfo(f"Branch '{oldBranchName}' has been renamed to '{newBranchName}'.")
         elif newBranchName not in branches and oldBranchName not in branches:
             # There is no main or master we will consider to create the main branch
             repo.git.branch(newBranchName)
@@ -481,13 +473,11 @@ class GitHub:
     def publishTilesToGitHub(folder, ghUser, gitRepository, feedback, version, password=None):
         import git
         feedback.pushConsoleInfo('Github found commiting to your account.')
-
         repo = GitHub.getRepository(folder, ghUser, gitRepository, password, feedback)
-
         now = datetime.now()
         # https://stackoverflow.com/questions/6565357/git-push-requires-username-and-password
         # repo.git.config("credential.helper", " ", "store") #FIXME git: 'credential-' is not a git command. See 'git --help
-        GitHub.checkForPrimaryBranch(repo, feedback)
+        GitHub.checkForPrimaryBranch(repo, feedback, ghUser, gitRepository)
         GitHub.tryPullRepository(repo, ghUser, gitRepository, feedback)  # Danilo
         feedback.pushConsoleInfo('Git: Add all generated tiles to your repository.')
         GitHub.addFiles(repo, ghUser, gitRepository, feedback)
@@ -515,9 +505,9 @@ class GitHub:
         return None
 
     @staticmethod
-    def getCredentials(secret):
+    def getCredentials(secret, curUser=''):
         # Danilo #FIXME colocar UNIQUE no BD
-        resp = requests.get('https://csr.ufmg.br/imagery/verify_key.php?state=' + secret)
+        resp = requests.get('https://csr.ufmg.br/imagery/verify_key.php?state=' + secret + '&login='+ curUser)
         if resp.status_code == 200:
             return json.loads(resp.text)
         else:
@@ -839,7 +829,7 @@ class GitInteractive():
 
     @staticmethod
     def gitCommit(repo, msg, feedback):
-        return UTILS.runLongTask(repo.git.commit, feedback, 'Please wait, uploading changes.', 30, m=msg)
+        return UTILS.runLongTask(repo.git.commit, feedback, 'Please wait, uploading changes.', 30, m=msg) #return repo.git.commit(m=msg) #UTILS.runLongTask(repo.git.commit, feedback, 'Please wait, uploading changes.', 30, m=msg)
 
     @staticmethod
     def addFiles(repo, user, repository, feedback):
