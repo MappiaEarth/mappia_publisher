@@ -11,6 +11,8 @@ set GRASS_BASEPATH=%OSGEO%\apps\grass\grass*
 set PYTHONHOME=%OSGEO%\apps\Python*
 set QT_BIN=%OSGEO%\apps\Qt*
 set IDE_PATH=C:\Program Files\JetBrains\PyCharm 2023.2.5\bin\pycharm64.exe
+set OSGEO_USERNAME=asfixia
+set OSGEO_PASSWORD=
 
 
 
@@ -18,6 +20,7 @@ set IDE_PATH=C:\Program Files\JetBrains\PyCharm 2023.2.5\bin\pycharm64.exe
 set PATH=%QGIS_DIR%;%QGIS_DIR%\apps\qgis;%QGIS_DIR%\apps\qgis\bin;%QGIS_DIR%\apps\qgis\python;%QGIS_DIR%\apps\qgis\python\qgis;%QT_BIN%\plugins;%PATH%
 REM Define the QGIS installation path
 SET QGIS_PATH=%QGIS_DIR%\apps\qgis
+set PLUGIN_FILEPATH=%~dp0..\mappia_publisher\zip_build\mappia_publisher.zip
 
 REM Add QGIS to Python's system path
 SET PYTHONPATH=%PYTHONPATH%;%QGIS_PATH%\python;%QGIS_PATH%\python\qgis;%QGIS_PATH%\python\qgis\PyQt;%QGIS_PATH%\python\plugins
