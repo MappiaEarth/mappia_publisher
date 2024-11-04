@@ -7,9 +7,10 @@ name=Mappia Publisher
 qgisMinimumVersion=3.4.1
 description=Share your maps online (raster and shape) as a profissional. Easily make your QGIS maps online 24/7 (for free, no private server required). (Beta Access, please report any error)
 #Dont forget to update the version in mappia_publisher_algorithm.py.
-version=2.10.2
+version=2.11.0
 author=Danilo da Silveira Figueira, Rubia Souza
 email=danilo@csr.ufmg.br
+license=GPL3
 
 about=Mappia is an online mapping platform accessible for everyone. Easy and free to share your maps online. (Beta Access, please report any issue)
     _
@@ -33,7 +34,9 @@ repository=https://github.com/MappiaEarth/mappia_publisher
 
 hasProcessingProvider=yes
 # Uncomment the following line and add your changelog:
-changelog=Round pixel size accordingly to function parameter types.
+changelog=Improve rendered tile quality
+    Use multi thread tile rendering
+    Round pixel size accordingly to function parameter types.
     Add validation to check if the output directory has the repository defined in the repository name.
     Fix Github errors on updating maps.
     Apply Github branch rename from master to primary.
